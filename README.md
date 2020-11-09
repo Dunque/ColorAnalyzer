@@ -9,8 +9,8 @@ Repositorio de la práctica 2 de IPM, curso 20/21.
   * Login UDC: juan.ramil@udc.es
   * Login Github: juan.ramil@udc.es
   
-  * Nombre:
-  * Apellidos:
-  * Login UDC:
-  * Login Github:
+  * Nombre: Roi 
+  * Apellidos: Santos Ríos
+  * Login UDC: roi.santos.rios@udc.es
+  * Login Github: roi.santos.rios@gmail.com
 
