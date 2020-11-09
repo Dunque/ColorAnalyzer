@@ -1,16 +1,16 @@
-# ASSIGNMENT: PRÁCTICA 2 - INTERFACES GRÁFICAS DE USUARIA PARA APLICACIONES MOVILES
+# flutter_app
 
-Repositorio de la práctica 2 de IPM, curso 20/21.
+A new Flutter application.
 
-## Miembros del grupo
+## Getting Started
 
-  * Nombre: Juan
-  * Apellidos: Ramil Díaz
-  * Login UDC: juan.ramil@udc.es
-  * Login Github: juan.ramil@udc.es
-  
-  * Nombre: Roi 
-  * Apellidos: Santos Ríos
-  * Login UDC: roi.santos.rios@udc.es
-  * Login Github: roi.santos.rios@gmail.com
+This project is a starting point for a Flutter application.
 
+A few resources to get you started if this is your first Flutter project:
+
+- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+
+For help getting started with Flutter, view our
+[online documentation](https://flutter.dev/docs), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
