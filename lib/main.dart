@@ -177,11 +177,12 @@ Future<String> postImage(String imagePath) async{
 
   var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
   var length = await imageFile.length();
-  Map<String, String> headers = { HttpHeaders.authorizationHeader: 'acc_f58f3e79e489ed5'};
+  Map<String, String> headers = { HttpHeaders.authorizationHeader: 'Basic YWNjXzAzMzMxYWFmNmE3ZDFiMjpjN2MwMzcyNDZmMTdkNmNlZmM1OWVjYjFjMzY1ZDU0OA=='};
   int timeout = 10;
 
   var request = new http.MultipartRequest("POST", Uri.parse('https://api.imagga.com/v2/faces/detections'));
   request.headers.addAll(headers);
+
   var multipartFile = new http.MultipartFile('image', stream, length, filename: basename(imageFile.path));
   request.fields['return_face_id'] = "1";
   request.files.add(multipartFile);
