@@ -138,7 +138,7 @@ class DisplayPictureScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(imagePath);
+
     return Scaffold(
       appBar: AppBar(title: Text('Display the Post')),
       // The image is stored as a file on the device. Use the `Image.file`
@@ -152,7 +152,7 @@ class DisplayPictureScreen extends StatelessWidget {
             // If the picture was taken, display it on a new screen.
             Navigator.push( context,
               MaterialPageRoute(
-                builder: (context) => DisplayPost(imagePath: imagePath),
+                builder: (context) => DisplayPost(file: File(imagePath)),
               ),
             );
           } catch (e) {
@@ -168,13 +168,7 @@ class DisplayPictureScreen extends StatelessWidget {
 //--------------------------------------------------------------------------------------
 
 
-Future<String> postImage(String imagePath) async{
-
-  File imageFile = new File(imagePath);
-
-  print(imagePath);
-  print(imageFile);
-
+Future<String> postImage(File imageFile) async{
   var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
   var length = await imageFile.length();
   Map<String, String> headers = { HttpHeaders.authorizationHeader: 'acc_f58f3e79e489ed5'};
@@ -214,47 +208,45 @@ Future<String> postImage(String imagePath) async{
   }
 }
 
-class DisplayPost extends StatefulWidget {
-  //final File file;
-  final String imagePath;
 
-  const DisplayPost({Key key, this.imagePath}) : super(key: key);
+class DisplayPost extends StatefulWidget {
+  DisplayPost({Key key, File file}) : super(key: key);
 
   @override
   DisplayPostState createState() => DisplayPostState();
 }
 
-
 class DisplayPostState extends State<DisplayPost> {
+  File file;
   Future<String> futureString;
 
   @override
   void initState() {
     super.initState();
-    futureString = postImage(widget.imagePath);
+    futureString = postImage(file);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Fetch Data Example'),
-      ),
-      body: Center(
-        child: FutureBuilder<String>(
-          future: futureString,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Text(snapshot.toString());
-            } else if (snapshot.hasError) {
-              return Text("${snapshot.error}");
-            }
-
-            // By default, show a loading spinner.
-            return CircularProgressIndicator();
-          },
+        appBar: AppBar(
+          title: Text('Fetch Data Example'),
         ),
-      ),
+        body: Center(
+          child: FutureBuilder<String>(
+            future: futureString,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Text(snapshot.toString());
+              } else if (snapshot.hasError) {
+                return Text("${snapshot.error}");
+              }
+
+              // By default, show a loading spinner.
+              return CircularProgressIndicator();
+            },
+          ),
+        ),
     );
   }
 }
