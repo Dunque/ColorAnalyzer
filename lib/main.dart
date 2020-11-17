@@ -188,30 +188,30 @@ Future<String> postImage(String imagePath) async{
 
   var multipartFile = new http.MultipartFile('image', stream, length, filename: basename(imageFile.path));
 
-  print(basename(imageFile.path));
   request.fields['extract_overall_colors '] = "1"; //Default: 1
   request.fields['extract_object_colors '] = "1"; //Default: 1
-  request.fields['overall_count'] = "5"; //Default: 5
-  request.fields['separated_count '] = "3"; //Default: 3
+  request.fields['overall_count'] = "1"; //Default: 5
+  request.fields['separated_count '] = "1"; //Default: 3
   request.fields['deterministic'] = "0"; //Default: 0
   //request.fields['features_type'] = "overall"; //overall or object
 
   request.files.add(multipartFile);
 
-  try{
-    var streamedResponse = await request.send().timeout(Duration(seconds: timeout));
+  var streamedResponse = await request.send().timeout(Duration(seconds: timeout));
 
-    if(streamedResponse.statusCode == HttpStatus.ok) {
-      var responseStream = await streamedResponse.stream.toBytes();
-      var responseString = String.fromCharCodes(responseStream);
-      Map<String, dynamic> response = await jsonDecode(responseString);
-      //print(response);
-      print(response['result']['colors']['image_colors']);
+  if(streamedResponse.statusCode == HttpStatus.ok) {
+    var responseStream = await streamedResponse.stream.toBytes();
+    var responseString = String.fromCharCodes(responseStream);
+    //Map response = jsonDecode(responseString);
+    //print(response);
+    //print(response['result']['colors']['image_colors']);
+  print(responseString);
+      return responseString;
+      //return jsonDecode(response['result']['colors']['image_colors'][0]['closest_palette_color']);
 
-        return jsonDecode(response['result']['colors']['image_colors']);
-      } else {
-        throw Exception('Failed to load album');
-      }
+  } else {
+    throw Exception('Failed HTTP');
+  }
 
     //   var responseData = await response.stream.toBytes();
     //   var responseString = String.fromCharCodes(responseData);
@@ -233,63 +233,6 @@ Future<String> postImage(String imagePath) async{
     //   return response.statusCode.toString();
     // }
 
-  }on Exception catch(exception){
-     print("Error, $exception");
-     return null;
-  }
-}
-
-class Album {
-  final int r,g,b;
-  final String color;
-
-  Album({this.r, this.g, this.b, this.color});
-
-  factory Album.fromJson(Map<String, dynamic> json) {
-    return Album(
-      r: json['r'],
-      g: json['g'],
-      b: json['b'],
-      color: json['color'],
-    );
-  }
-}
-
-class ColorsList {
-  final int b;
-  final String closestPaletteColor;
-  final String closestPaletteColorHtmlCode;
-  final String closestPaletteColorParent;
-  final double closestPaletteDistance;
-  final int g;
-  final String htmlCode;
-  final double percent;
-  final int r;
-
-  ColorsList({this.b,
-    this.closestPaletteColor,
-    this.closestPaletteColorHtmlCode,
-    this.closestPaletteColorParent,
-    this.closestPaletteDistance,
-    this.g,
-    this.htmlCode,
-    this.percent,
-    this.r});
-
-  factory ColorsList.fromJson(Map<String, dynamic> json) {
-    return ColorsList(
-      b : json['b'],
-      closestPaletteColor : json['closest_palette_color'],
-      closestPaletteColorHtmlCode : json['closest_palette_color_html_code'],
-      closestPaletteColorParent : json['closest_palette_color_parent'],
-      closestPaletteDistance : json['closest_palette_distance'],
-      g : json['g'],
-      htmlCode : json['html_code'],
-      percent : json['percent'],
-      r : json['r'],
-    );
-
-  }
 }
 
 class DisplayPost extends StatefulWidget {
@@ -304,47 +247,65 @@ class DisplayPost extends StatefulWidget {
 
 
 class DisplayPostState extends State<DisplayPost> {
-  Future<String> futureAlbum;
+  Future<List<String>> futureAlbum;
 
   @override
   void initState(){
     super.initState();
-    // if (futureAlbum == null)
-    //   print('el futuro es nulo $futureAlbum');
-    // else
-    //   print('el futuro NO es nulo $futureAlbum');
-    futureAlbum = genCode();
+    futureAlbum = _genCode();
   }
 
-  Future<String> genCode() async {
-    return await postImage(widget.imagePath);
+  Future<List<String>> _genCode() async {
+    String json = await postImage(widget.imagePath);
+    Map data = jsonDecode(json);
+    print(data['result']['colors']['image_colors'][0].keys.toList());
+    return data['result']['colors']['image_colors'][0].keys.toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Fetch Data Example'),
-      ),
-      body: Center(
-        child: FutureBuilder<String>(
-          future: genCode(),
-          builder: (context, AsyncSnapshot<String> snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
-            } else {
-              if (snapshot.hasError) {
-                return Text("${snapshot.error}");
-              } else {
-                return Text(snapshot.data);
-              }
-            }
-          },
-        ),
-      ),
+    appBar: AppBar(
+      title: Text('Fetch Data Example'),
+    ),
+    body: Center(
+      child: FutureBuilder(
+        future: futureAlbum,
+        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
+            List<String> data = snapshot.data;
+            return ListView.builder(
+              itemCount: data.length,
+              itemBuilder: (BuildContext context, int i) =>
+                  ListTile(
+                    title: Text(data[i])
+                  ),
+            );
+          }
+          else if (snapshot.connectionState != ConnectionState.done) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          else {
+            return Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    Image.asset('images/snoopy-penalty-box.gif'),
+                    Text(snapshot.error),
+                  ],
+                ),
+              ),
+            );
+          }
+        }
+    )
+      )
     );
   }
 }
+
 
 // @override
 // Widget build(BuildContext context) {
@@ -354,15 +315,20 @@ class DisplayPostState extends State<DisplayPost> {
 //     ),
 //     body: Center(
 //       child: FutureBuilder<String>(
-//         future: futureAlbum,
-//         builder: (context, snapshot) {
-//           if (snapshot.hasData) {
-//             return Text(snapshot.data.toString());
-//           } else if (snapshot.hasError) {
-//             return Text("${snapshot.error}");
+//         future: genCode(),
+//         builder: (context, AsyncSnapshot<String> snapshot) {
+//           if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
+//             return CircularProgressIndicator();
+//           } else {
+//             if (snapshot.hasError) {
+//               return Text("${snapshot.error}");
+//             } else {
+//               return Padding(
+//                   padding: const EdgeInsets.only(top: 16),
+//                   child: Text(snapshot.data)
+//               );
+//             }
 //           }
-//           // By default, show a loading spinner.
-//           return CircularProgressIndicator();
 //         },
 //       ),
 //     ),
