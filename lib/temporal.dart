@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:async/async.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path/path.dart' show basename, join;
 import 'package:path_provider/path_provider.dart';
 import 'package:tuple/tuple.dart';
@@ -106,10 +107,8 @@ class TakePictureScreenState extends State<TakePictureScreen> {
             final path = join(
               // Store the picture in the temp directory.
               // Find the temp directory using the `path_provider` plugin.
-              (await getTemporaryDirectory()).path,
-              '${DateTime.now()}.png',
-            );
-
+              (await getTemporaryDirectory()).path, '${DateTime.now()}.png');
+            await ImageGallerySaver.saveFile(path);
             // Attempt to take a picture and log where it's been saved.
             await _controller.takePicture(path);
 
@@ -136,9 +135,14 @@ class DisplayPictureScreen extends StatelessWidget {
 
   const DisplayPictureScreen({Key key, this.imagePath}) : super(key: key);
 
+  _savePhoto() async {
+    final result = await ImageGallerySaver.saveFile(imagePath);
+    print(result);
+  }
+
   @override
   Widget build(BuildContext context) {
-
+    _savePhoto();
     return Scaffold(
       appBar: AppBar(title: Text('Display the Post')),
       // The image is stored as a file on the device. Use the `Image.file`
@@ -152,7 +156,7 @@ class DisplayPictureScreen extends StatelessWidget {
             // If the picture was taken, display it on a new screen.
             Navigator.push( context,
               MaterialPageRoute(
-                builder: (context) => DisplayPost(file: File(imagePath)),
+                builder: (context) => DisplayPost(imagePath: imagePath),
               ),
             );
           } catch (e) {
@@ -168,16 +172,29 @@ class DisplayPictureScreen extends StatelessWidget {
 //--------------------------------------------------------------------------------------
 
 
-Future<String> postImage(File imageFile) async{
+Future<String> postImage(String imagePath) async {
+
+  File imageFile = new File(imagePath);
+
+  print(imagePath);
+  print(imageFile);
+
   var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
   var length = await imageFile.length();
-  Map<String, String> headers = { HttpHeaders.authorizationHeader: 'acc_f58f3e79e489ed5'};
+  Map<String, String> headers = { HttpHeaders.authorizationHeader: 'Basic YWNjXzAzMzMxYWFmNmE3ZDFiMjpjN2MwMzcyNDZmMTdkNmNlZmM1OWVjYjFjMzY1ZDU0OA=='};
   int timeout = 10;
 
-  var request = new http.MultipartRequest("POST", Uri.parse('https://api.imagga.com/v2/faces/detections'));
+  var request = new http.MultipartRequest("POST", Uri.parse('https://api.imagga.com/v2/colors'));
   request.headers.addAll(headers);
+
   var multipartFile = new http.MultipartFile('image', stream, length, filename: basename(imageFile.path));
-  request.fields['return_face_id'] = "1";
+
+  request.fields['extract_overall_colors '] = "1"; //Default: 1
+  request.fields['extract_object_colors '] = "1"; //Default: 1
+  request.fields['overall_count'] = "5"; //Default: 5
+  request.fields['separated_count '] = "3"; //Default: 3
+  request.fields['deterministic'] = "0"; //Default: 0
+
   request.files.add(multipartFile);
 
   try{
@@ -208,45 +225,47 @@ Future<String> postImage(File imageFile) async{
   }
 }
 
-
 class DisplayPost extends StatefulWidget {
-  DisplayPost({Key key, File file}) : super(key: key);
+  //final File file;
+  final String imagePath;
+
+  const DisplayPost({Key key, this.imagePath}) : super(key: key);
 
   @override
   DisplayPostState createState() => DisplayPostState();
 }
 
+
 class DisplayPostState extends State<DisplayPost> {
-  File file;
   Future<String> futureString;
 
   @override
   void initState() {
     super.initState();
-    futureString = postImage(file);
+    futureString = postImage(widget.imagePath);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Fetch Data Example'),
-        ),
-        body: Center(
-          child: FutureBuilder<String>(
-            future: futureString,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text(snapshot.toString());
-              } else if (snapshot.hasError) {
-                return Text("${snapshot.error}");
-              }
+      appBar: AppBar(
+        title: Text('Fetch Data Example'),
+      ),
+      body: Center(
+        child: FutureBuilder<String>(
+          future: futureString,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Text(snapshot.toString());
+            } else if (snapshot.hasError) {
+              return Text("${snapshot.error}");
+            }
 
-              // By default, show a loading spinner.
-              return CircularProgressIndicator();
-            },
-          ),
+            // By default, show a loading spinner.
+            return CircularProgressIndicator();
+          },
         ),
+      ),
     );
   }
 }

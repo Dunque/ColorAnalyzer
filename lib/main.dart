@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:developer';
 
 import 'package:async/async.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path/path.dart' show basename, join;
 import 'package:path_provider/path_provider.dart';
 import 'package:tuple/tuple.dart';
 import 'package:http/http.dart' as http;
+import 'package:date_time_format/date_time_format.dart';
 
 Future<void> main() async {
   // Ensure that plugin services are initialized so that `availableCameras()`
@@ -106,9 +110,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
             final path = join(
               // Store the picture in the temp directory.
               // Find the temp directory using the `path_provider` plugin.
-              (await getTemporaryDirectory()).path,
-              '${DateTime.now()}.png',
-            );
+              (await getTemporaryDirectory()).path,'${DateTimeFormat.format(DateTime.now(), format: 'j-n-Y_H:i:s:v')}.png');
 
             // Attempt to take a picture and log where it's been saved.
             await _controller.takePicture(path);
@@ -138,12 +140,12 @@ class DisplayPictureScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(imagePath);
     return Scaffold(
       appBar: AppBar(title: Text('Display the Post')),
       // The image is stored as a file on the device. Use the `Image.file`
       // constructor with the given path to display the image.
       body: Image.file(File(imagePath)),
+      //body: Image.file(a),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         // Provide an onPressed callback.
@@ -177,41 +179,115 @@ Future<String> postImage(String imagePath) async{
 
   var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
   var length = await imageFile.length();
+  print(length);
   Map<String, String> headers = { HttpHeaders.authorizationHeader: 'Basic YWNjXzAzMzMxYWFmNmE3ZDFiMjpjN2MwMzcyNDZmMTdkNmNlZmM1OWVjYjFjMzY1ZDU0OA=='};
   int timeout = 10;
 
-  var request = new http.MultipartRequest("POST", Uri.parse('https://api.imagga.com/v2/faces/detections'));
+  var request = new http.MultipartRequest("POST", Uri.parse('https://api.imagga.com/v2/colors'));
   request.headers.addAll(headers);
 
   var multipartFile = new http.MultipartFile('image', stream, length, filename: basename(imageFile.path));
-  request.fields['return_face_id'] = "1";
+
+  print(basename(imageFile.path));
+  request.fields['extract_overall_colors '] = "1"; //Default: 1
+  request.fields['extract_object_colors '] = "1"; //Default: 1
+  request.fields['overall_count'] = "5"; //Default: 5
+  request.fields['separated_count '] = "3"; //Default: 3
+  request.fields['deterministic'] = "0"; //Default: 0
+  //request.fields['features_type'] = "overall"; //overall or object
+
   request.files.add(multipartFile);
 
   try{
-    var response = await request.send().timeout(Duration(seconds: timeout));
+    var streamedResponse = await request.send().timeout(Duration(seconds: timeout));
 
-    if(response.statusCode == HttpStatus.ok){
-      var responseData = await response.stream.toBytes();
-      var responseString = String.fromCharCodes(responseData);
-      Map<String, dynamic> respuesta = jsonDecode(responseString);
-      if(respuesta['status']['type']=="success"){
-        if(respuesta['result']['faces'].length==1){
-          var faceId=respuesta['result']['faces'][0]['face_id'];
-          print(faceId);
-          return faceId;
-        }else if(respuesta['result']['faces'].length==0){
-          return "0";//ninguna cara
-        }else{
-          return "2";//demasiadas caras
-        }
-      }else{
-        return "Error Servidor";
+    if(streamedResponse.statusCode == HttpStatus.ok) {
+      var responseStream = await streamedResponse.stream.toBytes();
+      var responseString = String.fromCharCodes(responseStream);
+      Map<String, dynamic> response= jsonDecode(responseString);
+
+
+        return jsonDecode(response['result']['colors']['image_colors']);
+      } else {
+        throw Exception('Failed to load album');
       }
-    }else{
-      return response.statusCode.toString();
-    }
-  }on Exception catch(e){
-    return "Error $e";
+
+    //   var responseData = await response.stream.toBytes();
+    //   var responseString = String.fromCharCodes(responseData);
+    //   Map<String, dynamic> respuesta = jsonDecode(responseString);
+    //   if(respuesta['status']['type']=="success"){
+    //     if(respuesta['result']['colors'].length==1){
+    //       var faceId=respuesta['result']['faces'][0]['face_id'];
+    //       print(faceId);
+    //       return faceId;
+    //     }else if(respuesta['result']['colors'].length==0){
+    //       return "0";//ninguna cara
+    //     }else{
+    //       return "2";//demasiadas caras
+    //     }
+    //   }else{
+    //     return "Error Servidor";
+    //   }
+    // }else{
+    //   return response.statusCode.toString();
+    // }
+
+  }on Exception catch(exception){
+     print("Error, $exception");
+     return null;
+  }
+}
+
+class Album {
+  final int r,g,b;
+  final String color;
+
+  Album({this.r, this.g, this.b, this.color});
+
+  factory Album.fromJson(Map<String, dynamic> json) {
+    return Album(
+      r: json['r'],
+      g: json['g'],
+      b: json['b'],
+      color: json['color'],
+    );
+  }
+}
+
+class ColorsList {
+  final int b;
+  final String closestPaletteColor;
+  final String closestPaletteColorHtmlCode;
+  final String closestPaletteColorParent;
+  final double closestPaletteDistance;
+  final int g;
+  final String htmlCode;
+  final double percent;
+  final int r;
+
+  ColorsList({this.b,
+    this.closestPaletteColor,
+    this.closestPaletteColorHtmlCode,
+    this.closestPaletteColorParent,
+    this.closestPaletteDistance,
+    this.g,
+    this.htmlCode,
+    this.percent,
+    this.r});
+
+  factory ColorsList.fromJson(Map<String, dynamic> json) {
+    return ColorsList(
+      b : json['b'],
+      closestPaletteColor : json['closest_palette_color'],
+      closestPaletteColorHtmlCode : json['closest_palette_color_html_code'],
+      closestPaletteColorParent : json['closest_palette_color_parent'],
+      closestPaletteDistance : json['closest_palette_distance'],
+      g : json['g'],
+      htmlCode : json['html_code'],
+      percent : json['percent'],
+      r : json['r'],
+    );
+
   }
 }
 
@@ -227,12 +303,16 @@ class DisplayPost extends StatefulWidget {
 
 
 class DisplayPostState extends State<DisplayPost> {
-  Future<String> futureString;
+  Future<String> futureAlbum;
 
   @override
   void initState() {
     super.initState();
-    futureString = postImage(widget.imagePath);
+    futureAlbum = postImage(widget.imagePath);
+    if (futureAlbum == null)
+      print('el futuro es nulo $futureAlbum');
+    else
+      print('el futuro NO es nulo $futureAlbum');
   }
 
   @override
@@ -243,10 +323,10 @@ class DisplayPostState extends State<DisplayPost> {
       ),
       body: Center(
         child: FutureBuilder<String>(
-          future: futureString,
+          future: futureAlbum,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return Text(snapshot.toString());
+              return Text(snapshot.data.toString());
             } else if (snapshot.hasError) {
               return Text("${snapshot.error}");
             }

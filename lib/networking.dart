@@ -11,7 +11,7 @@ Future<Album> fetchAlbum() async {
 
   String apiKey = 'acc_f58f3e79e489ed5';
   String apiSecret = '5ec3e21833629bfa98cac01a0440a8ce';
-  Tuple2 auth = Tuple2<String,String>(apiKey, apiSecret);
+  //Tuple2 auth = Tuple2<String,String>(apiKey, apiSecret);
   String imagePath = '/path/to/your/image.jpg';
 
   final response = await http.post('https://api.imagga.com/v2/colors',
@@ -132,5 +132,45 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+}
+
+Future<String> postImage(File imageFile) async{
+  var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+  var length = await imageFile.length();
+  Map<String, String> headers = { HttpHeaders.authorizationHeader: API__BASIC};
+  int timeout = 10;
+
+  var request = new http.MultipartRequest("POST", Uri.parse('https://api.imagga.com/v2/faces/detections'));
+  request.headers.addAll(headers);
+  var multipartFile = new http.MultipartFile('image', stream, length,filename: basename(imageFile.path));
+  request.fields['return_face_id'] = "1";
+  request.files.add(multipartFile);
+
+  try{
+    var response = await request.send().timeout(Duration(seconds: timeout));
+
+    if(response.statusCode==HttpStatus.ok){
+      var responseData = await response.stream.toBytes();
+      var responseString = String.fromCharCodes(responseData);
+      Map<String, dynamic> respuesta = jsonDecode(responseString);
+      if(respuesta['status']['type']=="success"){
+        if(respuesta['result']['faces'].length==1){
+          var face_id=respuesta['result']['faces'][0]['face_id'];
+          print(face_id);
+          return face_id;
+        }else if(respuesta['result']['faces'].length==0){
+          return "0";//ninguna cara
+        }else{
+          return "2";//demasiadas caras
+        }
+      }else{
+        return "Error Servidor";
+      }
+    }else{
+      return response.statusCode.toString();
+    }
+  }on Exception catch(e){
+    return "Error $e";
   }
 }
