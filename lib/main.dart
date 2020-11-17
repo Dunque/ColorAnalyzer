@@ -204,8 +204,9 @@ Future<String> postImage(String imagePath) async{
     if(streamedResponse.statusCode == HttpStatus.ok) {
       var responseStream = await streamedResponse.stream.toBytes();
       var responseString = String.fromCharCodes(responseStream);
-      Map<String, dynamic> response= jsonDecode(responseString);
-
+      Map<String, dynamic> response = await jsonDecode(responseString);
+      //print(response);
+      print(response['result']['colors']['image_colors']);
 
         return jsonDecode(response['result']['colors']['image_colors']);
       } else {
@@ -306,13 +307,17 @@ class DisplayPostState extends State<DisplayPost> {
   Future<String> futureAlbum;
 
   @override
-  void initState() {
+  void initState(){
     super.initState();
-    futureAlbum = postImage(widget.imagePath);
-    if (futureAlbum == null)
-      print('el futuro es nulo $futureAlbum');
-    else
-      print('el futuro NO es nulo $futureAlbum');
+    // if (futureAlbum == null)
+    //   print('el futuro es nulo $futureAlbum');
+    // else
+    //   print('el futuro NO es nulo $futureAlbum');
+    futureAlbum = genCode();
+  }
+
+  Future<String> genCode() async {
+    return await postImage(widget.imagePath);
   }
 
   @override
@@ -323,19 +328,43 @@ class DisplayPostState extends State<DisplayPost> {
       ),
       body: Center(
         child: FutureBuilder<String>(
-          future: futureAlbum,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Text(snapshot.data.toString());
-            } else if (snapshot.hasError) {
-              return Text("${snapshot.error}");
+          future: genCode(),
+          builder: (context, AsyncSnapshot<String> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            } else {
+              if (snapshot.hasError) {
+                return Text("${snapshot.error}");
+              } else {
+                return Text(snapshot.data);
+              }
             }
-
-            // By default, show a loading spinner.
-            return CircularProgressIndicator();
           },
         ),
       ),
     );
   }
 }
+
+// @override
+// Widget build(BuildContext context) {
+//   return Scaffold(
+//     appBar: AppBar(
+//       title: Text('Fetch Data Example'),
+//     ),
+//     body: Center(
+//       child: FutureBuilder<String>(
+//         future: futureAlbum,
+//         builder: (context, snapshot) {
+//           if (snapshot.hasData) {
+//             return Text(snapshot.data.toString());
+//           } else if (snapshot.hasError) {
+//             return Text("${snapshot.error}");
+//           }
+//           // By default, show a loading spinner.
+//           return CircularProgressIndicator();
+//         },
+//       ),
+//     ),
+//   );
+// }
