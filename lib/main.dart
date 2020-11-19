@@ -1,16 +1,13 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
-import 'dart:developer';
+import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
 import 'package:path/path.dart' show basename, join;
 import 'package:path_provider/path_provider.dart';
-import 'package:tuple/tuple.dart';
 import 'package:http/http.dart' as http;
 import 'package:date_time_format/date_time_format.dart';
 
@@ -79,7 +76,29 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Take a picture')),
+      appBar: AppBar(title: Text('Take a picture'),
+       actions: <Widget>[
+        IconButton(
+          icon: const Icon(Icons.add_photo_alternate_outlined),
+          tooltip: 'Open Gallery',
+          onPressed: () async {
+              var image = await ImagePickerGC.pickImage(
+                  context: context,
+                  source: ImgSource.Gallery,
+                  cameraIcon: Icon(
+                    Icons.camera_alt,
+                    color: Colors.red,
+                  )
+              );
+
+              if (image != null)
+                Navigator.push(context,MaterialPageRoute(builder: (context) => DisplayPictureScreen(imagePath: image.path)));
+              else
+                return;
+          }
+        ),
+       ],
+      ),
       // Wait until the controller is initialized before displaying the
       // camera preview. Use a FutureBuilder to display a loading spinner
       // until the controller has finished initializing.
@@ -94,6 +113,12 @@ class TakePictureScreenState extends State<TakePictureScreen> {
             return Center(child: CircularProgressIndicator());
           }
         },
+      ),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        child: Container(
+          height: 240.0,
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.camera_alt),
@@ -128,6 +153,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
           }
         },
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
@@ -174,9 +200,10 @@ Future<String> postImage(String imagePath) async{
 
   File imageFile = new File(imagePath);
 
-  print(imagePath);
-  print(imageFile);
+  // print(imagePath);
+  // print(imageFile);
 
+  // ignore: deprecated_member_use
   var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
   var length = await imageFile.length();
   print(length);
@@ -189,8 +216,8 @@ Future<String> postImage(String imagePath) async{
   var multipartFile = new http.MultipartFile('image', stream, length, filename: basename(imageFile.path));
 
   request.fields['extract_overall_colors '] = "1"; //Default: 1
-  request.fields['extract_object_colors '] = "1"; //Default: 1
-  request.fields['overall_count'] = "1"; //Default: 5
+  request.fields['extract_object_colors '] = "0"; //Default: 1
+  request.fields['overall_count'] = "5"; //Default: 5
   request.fields['separated_count '] = "1"; //Default: 3
   request.fields['deterministic'] = "0"; //Default: 0
   //request.fields['features_type'] = "overall"; //overall or object
@@ -202,36 +229,12 @@ Future<String> postImage(String imagePath) async{
   if(streamedResponse.statusCode == HttpStatus.ok) {
     var responseStream = await streamedResponse.stream.toBytes();
     var responseString = String.fromCharCodes(responseStream);
-    //Map response = jsonDecode(responseString);
-    //print(response);
-    //print(response['result']['colors']['image_colors']);
-  print(responseString);
-      return responseString;
-      //return jsonDecode(response['result']['colors']['image_colors'][0]['closest_palette_color']);
+    // print(responseString);
+    return responseString;
 
   } else {
     throw Exception('Failed HTTP');
   }
-
-    //   var responseData = await response.stream.toBytes();
-    //   var responseString = String.fromCharCodes(responseData);
-    //   Map<String, dynamic> respuesta = jsonDecode(responseString);
-    //   if(respuesta['status']['type']=="success"){
-    //     if(respuesta['result']['colors'].length==1){
-    //       var faceId=respuesta['result']['faces'][0]['face_id'];
-    //       print(faceId);
-    //       return faceId;
-    //     }else if(respuesta['result']['colors'].length==0){
-    //       return "0";//ninguna cara
-    //     }else{
-    //       return "2";//demasiadas caras
-    //     }
-    //   }else{
-    //     return "Error Servidor";
-    //   }
-    // }else{
-    //   return response.statusCode.toString();
-    // }
 
 }
 
@@ -247,7 +250,7 @@ class DisplayPost extends StatefulWidget {
 
 
 class DisplayPostState extends State<DisplayPost> {
-  Future<List<String>> futureAlbum;
+  Future<String> futureAlbum;
 
   @override
   void initState(){
@@ -255,11 +258,12 @@ class DisplayPostState extends State<DisplayPost> {
     futureAlbum = _genCode();
   }
 
-  Future<List<String>> _genCode() async {
+  Future<String> _genCode() async {
     String json = await postImage(widget.imagePath);
-    Map data = jsonDecode(json);
-    print(data['result']['colors']['image_colors'][0].keys.toList());
-    return data['result']['colors']['image_colors'][0].keys.toList();
+    // Map data = jsonDecode(json);
+    // print(data['result']['colors']['image_colors'][0].keys.toList());
+    // print(data['result']['colors']['image_colors'][0].values.toList());
+    return json;
   }
 
   @override
@@ -271,16 +275,12 @@ class DisplayPostState extends State<DisplayPost> {
     body: Center(
       child: FutureBuilder(
         future: futureAlbum,
-        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
           if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
-            List<String> data = snapshot.data;
-            return ListView.builder(
-              itemCount: data.length,
-              itemBuilder: (BuildContext context, int i) =>
-                  ListTile(
-                    title: Text(data[i])
-                  ),
-            );
+            String data = snapshot.data;
+
+            return jsonParser(data, context);
+
           }
           else if (snapshot.connectionState != ConnectionState.done) {
             return Center(
@@ -306,31 +306,49 @@ class DisplayPostState extends State<DisplayPost> {
   }
 }
 
+ListView jsonParser( String snapdata, BuildContext context) {
+  Map data = jsonDecode(snapdata);
 
-// @override
-// Widget build(BuildContext context) {
-//   return Scaffold(
-//     appBar: AppBar(
-//       title: Text('Fetch Data Example'),
-//     ),
-//     body: Center(
-//       child: FutureBuilder<String>(
-//         future: genCode(),
-//         builder: (context, AsyncSnapshot<String> snapshot) {
-//           if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
-//             return CircularProgressIndicator();
-//           } else {
-//             if (snapshot.hasError) {
-//               return Text("${snapshot.error}");
-//             } else {
-//               return Padding(
-//                   padding: const EdgeInsets.only(top: 16),
-//                   child: Text(snapshot.data)
-//               );
-//             }
-//           }
-//         },
-//       ),
-//     ),
-//   );
-// }
+  var length = data['result']['colors']['image_colors'].length;
+
+  List values;
+
+  List<String> result = [];
+  List<Color> colors = [];
+
+  for (var i = 0; i < length; i++) {
+    values = data['result']['colors']['image_colors'][i].values.toList();
+
+    result.add(values[1].toString().toUpperCase());
+    result.add('R: ' + values[8].toString());
+    result.add('G: ' + values[5].toString());
+    result.add('B: ' + values[0].toString());
+    result.add('HTML -> ' + values[6].toString());
+    result.add('Percentage of this color -> ' + values[7].toStringAsFixed(2) + '%');
+    result.add(' ');
+
+    colors.add(Color.fromARGB(255, values[8], values[5], values[0]));
+
+  }
+
+  return ListView.builder(
+    itemCount: 7 * length,
+    itemBuilder: (BuildContext context, int n) =>
+        Ink(
+          color: colors[(n~/7)],
+          child: ListTile(leading: Text(result[n])),
+        )
+  );
+}
+
+int getColor(String color){
+  String aux;
+  int result;
+  try {
+    aux = color.substring(3);
+    result = int.parse(aux);
+    return result;
+  } catch (e){
+    return 0;
+  }
+}
