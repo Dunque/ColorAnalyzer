@@ -218,7 +218,7 @@ Future<String> postImage(String imagePath) async{
   request.fields['extract_overall_colors '] = "1"; //Default: 1
   request.fields['extract_object_colors '] = "0"; //Default: 1
   request.fields['overall_count'] = "5"; //Default: 5
-  request.fields['separated_count '] = "1"; //Default: 3
+  request.fields['separated_count'] = "1"; //Default: 3
   request.fields['deterministic'] = "0"; //Default: 0
   //request.fields['features_type'] = "overall"; //overall or object
 
