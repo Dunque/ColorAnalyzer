@@ -76,7 +76,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Take a picture'),
+      appBar: AppBar(title: Text('Take or choose a photo'),
        actions: <Widget>[
         IconButton(
           icon: const Icon(Icons.add_photo_alternate_outlined),
@@ -167,13 +167,14 @@ class DisplayPictureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Display the Post')),
+      appBar: AppBar(title: Text('Preview')),
       // The image is stored as a file on the device. Use the `Image.file`
       // constructor with the given path to display the image.
       body: Image.file(File(imagePath)),
       //body: Image.file(a),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: Icon(Icons.add),
+        label: Text("Upload"),
         // Provide an onPressed callback.
         onPressed: () async {
           try {
@@ -193,15 +194,9 @@ class DisplayPictureScreen extends StatelessWidget {
   }
 }
 
-//--------------------------------------------------------------------------------------
-
-
 Future<String> postImage(String imagePath) async{
 
   File imageFile = new File(imagePath);
-
-  // print(imagePath);
-  // print(imageFile);
 
   // ignore: deprecated_member_use
   var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
@@ -220,7 +215,6 @@ Future<String> postImage(String imagePath) async{
   request.fields['overall_count'] = "5"; //Default: 5
   request.fields['separated_count'] = "1"; //Default: 3
   request.fields['deterministic'] = "0"; //Default: 0
-  //request.fields['features_type'] = "overall"; //overall or object
 
   request.files.add(multipartFile);
 
@@ -250,58 +244,55 @@ class DisplayPost extends StatefulWidget {
 
 
 class DisplayPostState extends State<DisplayPost> {
-  Future<String> futureAlbum;
+  Future<String> futureString;
 
   @override
   void initState(){
     super.initState();
-    futureAlbum = _genCode();
+    futureString = _genCode();
   }
 
   Future<String> _genCode() async {
     String json = await postImage(widget.imagePath);
-    // Map data = jsonDecode(json);
-    // print(data['result']['colors']['image_colors'][0].keys.toList());
-    // print(data['result']['colors']['image_colors'][0].values.toList());
     return json;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    appBar: AppBar(
-      title: Text('Fetch Data Example'),
-    ),
-    body: Center(
-      child: FutureBuilder(
-        future: futureAlbum,
-        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-          if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
-            String data = snapshot.data;
+      appBar: AppBar(
+        title: Text('Detected colors')),
+      body:
+      Column(
+          children: <Widget> [
+            Image.file(File(widget.imagePath)),
+            Expanded(
+                child: FutureBuilder(
+                    future: futureString,
+                    builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
+                        String data = snapshot.data;
+                        return jsonParser(data, context);
+                      }
+                      else if (snapshot.connectionState != ConnectionState.done) {
+                        return Center(
+                            child: CircularProgressIndicator()
+                        );
+                      }
+                      else {
+                        return Center(
+                            child: Text("There was an error with the server")
+                        );
+                      }
+                    }
+                )
+            )
 
-            return jsonParser(data, context);
-
-          }
-          else if (snapshot.connectionState != ConnectionState.done) {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-          else {
-            return Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: <Widget>[
-                    Image.asset('images/snoopy-penalty-box.gif'),
-                    Text(snapshot.error),
-                  ],
-                ),
-              ),
-            );
-          }
-        }
-    )
+          ]
       )
+
+
+
     );
   }
 }
@@ -320,35 +311,20 @@ ListView jsonParser( String snapdata, BuildContext context) {
     values = data['result']['colors']['image_colors'][i].values.toList();
 
     result.add(values[1].toString().toUpperCase());
-    result.add('R: ' + values[8].toString());
-    result.add('G: ' + values[5].toString());
-    result.add('B: ' + values[0].toString());
+    result.add('R: ' + values[8].toString() + '  G: ' + values[5].toString() + '  B: ' + values[0].toString());
     result.add('HTML -> ' + values[6].toString());
     result.add('Percentage of this color -> ' + values[7].toStringAsFixed(2) + '%');
-    result.add(' ');
 
     colors.add(Color.fromARGB(255, values[8], values[5], values[0]));
 
   }
 
   return ListView.builder(
-    itemCount: 7 * length,
+    itemCount: 4 * length,
     itemBuilder: (BuildContext context, int n) =>
         Ink(
-          color: colors[(n~/7)],
+          color: colors[(n~/4)],
           child: ListTile(leading: Text(result[n])),
         )
   );
-}
-
-int getColor(String color){
-  String aux;
-  int result;
-  try {
-    aux = color.substring(3);
-    result = int.parse(aux);
-    return result;
-  } catch (e){
-    return 0;
-  }
 }
