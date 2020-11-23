@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/src/models/jsonParser.dart';
 import 'package:flutter_app/src/resources/imagePost.dart';
@@ -36,33 +37,67 @@ class DisplayColorState extends State<DisplayColorScreen> {
     return Scaffold(
         appBar: AppBar(
             title: Text('Detected colors')),
-        body:
-        Column(
-            children: <Widget> [
-              Image.file(File(widget.imagePath)),
-              Expanded(
-                  child: FutureBuilder(
-                      future: futureString,
-                      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
-                          String data = snapshot.data;
-                          return jsonParser(data, context);
-                        }
-                        else if (snapshot.connectionState != ConnectionState.done) {
-                          return Center(
-                              child: CircularProgressIndicator()
-                          );
-                        }
-                        else {
-                          return Center(
-                              child: Text("There was an error with the server")
-                          );
-                        }
-                      }
-                  )
-              )
-            ]
+        body: OrientationBuilder(
+          builder: (context, orientation) {
+            if (orientation == Orientation.portrait){
+              return Column(
+                  children: <Widget> [
+                    Image.file(File(widget.imagePath)),
+                    Expanded(
+                        child: FutureBuilder(
+                            future: futureString,
+                            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                              if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
+                                String data = snapshot.data;
+                                return jsonParser(data, context);
+                              }
+                              else if (snapshot.connectionState != ConnectionState.done) {
+                                return Center(
+                                    child: CircularProgressIndicator()
+                                );
+                              }
+                              else {
+                                return Center(
+                                    child: Text("There was an error with the server")
+                                );
+                              }
+                            }
+                        )
+                    )
+                  ]
+              );
+            } else {
+              return Row(
+                  children: <Widget> [
+                    Image.file(File(widget.imagePath)),
+                    Expanded(
+                        child: FutureBuilder(
+                            future: futureString,
+                            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                              if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
+                                String data = snapshot.data;
+                                return jsonParser(data, context);
+                              }
+                              else if (snapshot.connectionState != ConnectionState.done) {
+                                return Center(
+                                    child: CircularProgressIndicator()
+                                );
+                              }
+                              else {
+                                return Center(
+                                    child: Text("There was an error with the server")
+                                );
+                              }
+                            }
+                        )
+                    )
+                  ]
+              );
+            }
+          },
         )
+
+
     );
   }
 }

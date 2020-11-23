@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_app/src/ui/showPictureScreen.dart';
 import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
 import 'package:path/path.dart' show join;
@@ -20,6 +21,17 @@ class TakePictureScreen extends StatefulWidget {
 class TakePictureScreenState extends State<TakePictureScreen> {
   CameraController _controller;
   Future<void> _initializeControllerFuture;
+
+  Widget _buildCameraPreview() {
+    return Container(
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: _controller.value.aspectRatio,
+          child: CameraPreview(_controller),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -40,7 +52,11 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp
+    ]);
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(title: Text('Take or choose a photo'),
         actions: <Widget>[
           IconButton(
@@ -73,18 +89,12 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             // If the Future is complete, display the preview.
-            return CameraPreview(_controller);
+            return Center(child: _buildCameraPreview());
           } else {
             // Otherwise, display a loading indicator.
             return Center(child: CircularProgressIndicator());
           }
         },
-      ),
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        child: Container(
-          height: 240.0,
-        ),
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.camera_alt),
@@ -120,7 +130,8 @@ class TakePictureScreenState extends State<TakePictureScreen> {
           }
         },
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterDocked,
     );
   }
 }
+
