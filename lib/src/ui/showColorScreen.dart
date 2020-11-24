@@ -35,7 +35,7 @@ class DisplayColorState extends State<DisplayColorScreen> {
             children: <Widget> [
               Expanded(
                 child: Container(
-                    color: Colors.black,
+                    color: Theme.of(context).primaryColor,
                     constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width, minHeight: MediaQuery.of(context).size.height),
                     child: Image(image: FileImage(File(widget.imagePath)))
                 )
