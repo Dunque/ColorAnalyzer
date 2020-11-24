@@ -33,9 +33,7 @@ ListView jsonParser(String snapdata, BuildContext context) {
                   result[n],
                   style: TextStyle(
                     foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 2
-                      ..color = Colors.blue[700],
+                      ..color = (colors[(n~/4)].red > 125 && colors[(n~/4)].green > 125 && colors[(n~/4)].blue > 125) ? Colors.black : Colors.white
                   ),
                 )
             ),
