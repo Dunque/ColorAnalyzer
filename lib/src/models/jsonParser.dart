@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-
 
 ListView jsonParser(String snapdata, BuildContext context) {
   Map data = jsonDecode(snapdata);

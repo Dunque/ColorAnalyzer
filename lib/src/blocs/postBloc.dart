@@ -1,19 +1,22 @@
+import 'package:rxdart/rxdart.dart';
+import 'package:flutter_app/src/resources/repository.dart';
 
+class PostBloc {
+  final _repository = Repository();
+  //final _imagePoster = ImagePoster();
+  final _jsonFetcher = PublishSubject<String>();
 
-// class PostBloc {
-//   final _repository = Repository();
-//   final _moviesFetcher = PublishSubject<ItemModel>();
-//
-//   Observable<ItemModel> get allMovies => _moviesFetcher.stream;
-//
-//   fetchAllMovies() async {
-//     ItemModel itemModel = await _repository.fetchAllMovies();
-//     _moviesFetcher.sink.add(itemModel);
-//   }
-//
-//   dispose() {
-//     _moviesFetcher.close();
-//   }
-// }
-//
-// final bloc = MoviesBloc();
+  Observable<String> get json => _jsonFetcher.stream;
+
+  fetchJson(imagePath) async {
+    String json = await _repository.imagePoster.postImage(imagePath);
+    //String json = await _imagePoster.postImage(imagePath);
+    _jsonFetcher.sink.add(json);
+  }
+
+  dispose() {
+    _jsonFetcher.close();
+  }
+}
+
+final bloc = PostBloc();

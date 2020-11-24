@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_app/src/ui/showColorScreen.dart';
@@ -23,12 +22,14 @@ class DisplayPictureState extends State<DisplayPictureScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+
     return Scaffold(
       appBar: AppBar(title: Text('Preview')),
       // The image is stored as a file on the device. Use the `Image.file`
@@ -61,6 +62,7 @@ class DisplayPictureState extends State<DisplayPictureScreen> {
   @override
   void dispose() {
     super.dispose();
+    // Con esto la cámara recupera su
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
