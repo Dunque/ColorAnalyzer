@@ -28,7 +28,17 @@ ListView jsonParser(String snapdata, BuildContext context) {
       itemBuilder: (BuildContext context, int n) =>
           Ink(
             color: colors[(n~/4)],
-            child: ListTile(leading: Text(result[n])),
+            child: ListTile(
+                leading: Text(
+                  result[n],
+                  style: TextStyle(
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 2
+                      ..color = Colors.blue[700],
+                  ),
+                )
+            ),
           )
   );
 }
