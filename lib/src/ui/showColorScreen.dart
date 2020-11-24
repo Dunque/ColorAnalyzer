@@ -33,7 +33,13 @@ class DisplayColorState extends State<DisplayColorScreen> {
         body: Flex(
             direction: isScreenWide ? Axis.horizontal : Axis.vertical,
             children: <Widget> [
-              Image.file(File(widget.imagePath)),
+              Expanded(
+                child: Container(
+                    color: Colors.black,
+                    constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width, minHeight: MediaQuery.of(context).size.height),
+                    child: Image(image: FileImage(File(widget.imagePath)))
+                )
+              ),
               Expanded(child: StreamBuilder(
                   stream: bloc.json,
                   builder: (BuildContext context, AsyncSnapshot<String> snapshot) {

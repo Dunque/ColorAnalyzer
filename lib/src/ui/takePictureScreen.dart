@@ -40,6 +40,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 
     // Next, initialize the controller. This returns a Future.
     _initializeControllerFuture = _controller.initialize();
+
   }
 
   @override
@@ -65,10 +66,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                 var image = await ImagePickerGC.pickImage(
                     context: context,
                     source: ImgSource.Gallery,
-                    cameraIcon: Icon(
-                      Icons.camera_alt,
-                      color: Colors.red,
-                    )
                 );
 
                 if (image != null)
@@ -129,7 +126,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
           }
         },
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
