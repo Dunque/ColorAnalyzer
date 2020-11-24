@@ -30,7 +30,7 @@ ListView jsonParser(String snapdata, BuildContext context) {
             color: colors[(n~/4)],
             child: ListTile(
                 leading: Text(
-                  result[n],
+                  result[n], 
                   style: TextStyle(
                     foreground: Paint()
                       ..color = (colors[(n~/4)].red > 125 && colors[(n~/4)].green > 125 && colors[(n~/4)].blue > 125) ? Colors.black : Colors.white

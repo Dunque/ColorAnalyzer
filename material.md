@@ -1,3 +1,6 @@
 Inspección de elementos de las guías de Material [https://material.io/design].
 
-En cuanto a legibilidad de texto, hemos decidido pintar el borde de las letras del texto de la pantalla que muestra los colores finales, asegurando la legibilidad.
+1. En cuanto a legibilidad de texto, en la pantalla final donde se muestra el procesado de la imagen, hemos decidido cambiar el color del texto en función del color de fondo, asegurando su legibilidad [https://material.io/design/color/text-legibility.html].
+2. En la pantalla de previsualización de la foto o la imagen seleccionada, hemos añadido el texto "Upload" al botón de procesado de la imagen, respetando las directrices de espaciado de material [https://material.io/design/layout/spacing-methods.html#spacing]. Pretendemos conseguir claridad y mas especificidad para entender la función del botón.
+
+No hemos detectado mayores discrepancias respecto a las guías de Material.
